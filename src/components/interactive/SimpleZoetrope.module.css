@@ -1,0 +1,233 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoetropeContainer {
+  position: relative;
+  width: 350px;
+  height: 350px;
+  margin: 0 auto;
+  perspective: 1000px;
+}
+
+.base {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 50px;
+  background: linear-gradient(to bottom, #8B4513, #5D4037);
+  border-radius: 50% / 20%;
+  z-index: 1;
+}
+
+.disc {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(to bottom, #A0522D, #8B4513);
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+  animation: rotate 5s linear infinite;
+  animation-play-state: paused;
+}
+
+.framesContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  z-index: 3;
+  animation: rotate 5s linear infinite;
+  animation-play-state: paused;
+}
+
+.spinning {
+  animation-play-state: running;
+}
+
+@keyframes rotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.slit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 40px;
+  background-color: rgba(0, 0, 0, 0.8);
+  transform-origin: center;
+}
+
+.frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  transform-origin: center;
+}
+
+.horse {
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M70,40 C80,40 85,50 85,60 C85,70 80,80 70,80 L30,80 C20,80 15,70 15,60 C15,50 20,40 30,40 Z' fill='%23E0C9A6'/%3E%3Cellipse cx='75' cy='45' rx='10' ry='15' fill='%23E0C9A6'/%3E%3Crect x='25' y='80' width='5' height='20' transform='rotate(calc(var(--phase) * 40 - 20), 27.5, 80)' fill='%23E0C9A6'/%3E%3Crect x='35' y='80' width='5' height='20' transform='rotate(calc(var(--phase) * -40 + 20), 37.5, 80)' fill='%23E0C9A6'/%3E%3Crect x='55' y='80' width='5' height='20' transform='rotate(calc(var(--phase) * 40 - 20), 57.5, 80)' fill='%23E0C9A6'/%3E%3Crect x='65' y='80' width='5' height='20' transform='rotate(calc(var(--phase) * -40 + 20), 67.5, 80)' fill='%23E0C9A6'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 30px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px 20px;
+  border-radius: 30px;
+}
+
+.button {
+  background-color: #8B4513;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #A0522D;
+}
+
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.label {
+  color: white;
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+}
+
+.slider {
+  width: 120px;
+}
+
+.infoButton {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.infoButton:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.infoOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.infoContent {
+  background-color: rgba(30, 30, 30, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 500px;
+  text-align: center;
+}
+
+.infoContent h2 {
+  font-family: 'Fredericka the Great', serif;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.infoContent p {
+  font-family: 'IM Fell English', serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.closeButton {
+  background-color: #8B4513;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 1rem;
+}
+
+.closeButton:hover {
+  background-color: #A0522D;
+}
+
+@media (max-width: 768px) {
+  .zoetropeContainer {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .disc {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .framesContainer {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+}

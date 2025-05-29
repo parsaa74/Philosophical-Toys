@@ -30,6 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# development logs
+*.log
+dev.log
+dev2.log
+prod.log
+
 # env files (can opt-in for committing if needed)
 .env*
 
@@ -39,3 +45,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# editor directories
+.vscode/
+.cursor/
+.idea/
+
+# temporary files
+*.tmp
+*.bak
+
+# experimental/prototype directories
+/p5 & three.js sketches/
+/codepen/

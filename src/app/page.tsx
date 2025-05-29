@@ -1,103 +1,183 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+// import { AnimatedIntro } from '@/components/p5/AnimatedIntro';
+
+// InteractiveZoetrope component removed
+
+// Dynamic import for the philosophical timeline
+const DynamicPhilosophicalTimeline = dynamic(
+  () => import('../components/interactive/PhilosophicalTimeline'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-[45] flex items-center justify-center">
+        <div className="text-white text-opacity-70 text-lg">Loading interactive timeline...</div>
+      </div>
+    )
+  }
+);
+
+// Dynamic import for the modern title sketch (Tim Rodenbroeker style)
+const DynamicModernTitleSketch = dynamic(
+  () => import('../components/p5/ModernTitleSketch'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 flex items-center justify-center bg-black">
+        <div className="text-white text-opacity-70 text-lg font-light tracking-wider">Loading...</div>
+      </div>
+    )
+  }
+);
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  // Component visibility states
+  const [showTimeline, setShowTimeline] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionProgress, setTransitionProgress] = useState(0);
+  const [isSlidingUp, setIsSlidingUp] = useState(false);
+  const [showModernTitle, setShowModernTitle] = useState(true);
+  const animationRef = useRef<number | null>(null);
+  const timelineContainerRef = useRef<HTMLDivElement>(null);
+  const filmLeaderContainerRef = useRef<HTMLDivElement>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Flow control handlers
+  const handleIntroComplete = () => {
+    console.log("Modern title complete");
+    setIsSlidingUp(true);
+  };
+
+  const handleModernTitleTransitionEnd = () => {
+    if (isSlidingUp) {
+      setShowModernTitle(false);
+      setIsTransitioning(true);
+      animateTransition();
+    }
+  };
+
+  // Smooth transition animation
+  const animateTransition = () => {
+    let startTime: number | null = null;
+    const duration = 1500; // 1.5 seconds
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      
+      // Apply easing (cubic ease-out)
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      setTransitionProgress(easedProgress);
+      
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        // Animation complete - slight delay before showing timeline to trigger entrance animations
+        setTimeout(() => {
+          setShowTimeline(true);
+          setIsTransitioning(false);
+          
+          // Focus the timeline container for keyboard navigation
+          if (timelineContainerRef.current) {
+            timelineContainerRef.current.focus();
+          }
+        }, 100); // Small delay to ensure proper state transition
+      }
+    };
+    
+    // Start animation
+    animationRef.current = requestAnimationFrame(animate);
+  };
+
+  // Clean up animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+
+  const handleTimelineInteraction = (type: string) => {
+    console.log("Timeline interaction:", type);
+    // Handle timeline interactions if needed
+  };
+
+  return (
+    <main className="relative flex h-screen w-full flex-col items-center justify-between bg-black overflow-hidden">
+      {/* Modern Title Container with slide-up animation */}
+      {showModernTitle && (
+        <div
+          ref={filmLeaderContainerRef}
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black"
+          style={{
+            transition: 'transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+            transform: isSlidingUp ? 'translateY(-100vh)' : 'translateY(0)',
+            willChange: 'transform',
+          }}
+          onTransitionEnd={handleModernTitleTransitionEnd}
+        >
+          <DynamicModernTitleSketch
+            onAnimationComplete={handleIntroComplete}
+            text="philosophical toys"
+            style="rodenbroeker"
+            paused={isSlidingUp}
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      )}
+
+      {/* Timeline Container with vertical slide-in effect */}
+      <div 
+        ref={timelineContainerRef}
+        className="fixed inset-0 z-[30]"
+        style={{
+          opacity: showTimeline ? 1 : isTransitioning ? transitionProgress : 0,
+          transform: showTimeline ? 'translateY(0)' : `translateY(${(1 - transitionProgress) * 100}vh)`,
+          transition: isTransitioning ? 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
+          pointerEvents: showTimeline ? 'auto' : 'none'
+        }}
+      >
+        <DynamicPhilosophicalTimeline 
+          isVisible={showTimeline} 
+          onInteraction={handleTimelineInteraction} 
+        />
+      </div>
+
+      {/* Film Strip Visual Elements - Completely disabled */}
+      {false && (
+        <div className="fixed inset-0 z-[50] pointer-events-none overflow-hidden">
+          {/* Left film perforations */}
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-[#222]" 
+               style={{ opacity: 1 - transitionProgress * 0.8 }}>
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div 
+                key={`left-${i}`}
+                className="absolute w-4 h-4 rounded-full bg-black left-4" 
+                style={{ 
+                  top: `${i * 5}vh`,
+                  boxShadow: 'inset 0 0 4px rgba(0, 0, 0, 0.8)'
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Right film perforations */}
+          <div className="absolute right-0 top-0 bottom-0 w-12 bg-[#222]"
+               style={{ opacity: 1 - transitionProgress * 0.8 }}>
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div 
+                key={`right-${i}`}
+                className="absolute w-4 h-4 rounded-full bg-black right-4" 
+                style={{ 
+                  top: `${i * 5}vh`,
+                  boxShadow: 'inset 0 0 4px rgba(0, 0, 0, 0.8)'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </main>
   );
 }

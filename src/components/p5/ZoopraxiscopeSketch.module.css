@@ -1,0 +1,300 @@
+/* Zoopraxiscope Component Styling */
+.zoopraxiscopeWrapper {
+  font-family: 'Courier New', monospace;
+  color: #f0f0f0;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: clamp(0.5rem, 2vw, 1rem);
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+.zoopraxiscopeWrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(30, 20, 10, 0.5) 0%, rgba(20, 20, 30, 0.5) 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.sketchHeader {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.sketchHeader h2 {
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  margin: 0;
+  color: #f8f0e0;
+  font-weight: normal;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.sketchHeader p {
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  color: #c0b090;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+}
+
+.sketchContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  height: 100%;
+}
+
+@media (min-width: 768px) {
+  .sketchContainer {
+    flex-direction: row;
+  }
+}
+
+.canvasContainer {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 300px;
+  max-height: 80vh;
+  border: 4px solid #554433;
+  border-radius: 5px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.canvasContainer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 60%, rgba(0, 0, 0, 0.8) 100%);
+  pointer-events: none;
+}
+
+.historicalCaption {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #f8f0e0;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  max-width: 80%;
+  text-align: center;
+  font-style: italic;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: 10;
+  border: 1px solid rgba(200, 180, 140, 0.3);
+}
+
+.fadeIn {
+  opacity: 1;
+}
+
+.controlsContainer {
+  flex: 0 0 300px;
+  background-color: #1a1510;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: inset 0 0 10px #000;
+  border: 1px solid #443322;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.controlsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #443322;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.antiqueBrass {
+  color: #d0b080;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+.runningTime {
+  font-family: 'Courier New', monospace;
+  background-color: #000;
+  color: #d0a060;
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(208, 160, 96, 0.5);
+}
+
+.mainButton {
+  background: linear-gradient(to bottom, #7a5c3d 0%, #503010 100%);
+  color: #f0e0c0;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 1px solid #7a5c3d;
+}
+
+.mainButton:hover {
+  background: linear-gradient(to bottom, #8a6c4d 0%, #604020 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.mainButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.mainButton.active {
+  background: linear-gradient(to bottom, #aa7c5d 0%, #704030 100%);
+  border-color: #aa7c5d;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.controlGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.controlGroup label {
+  color: #d0b080;
+  font-size: 0.9rem;
+}
+
+.slider {
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #2a2018;
+  border-radius: 3px;
+  outline: none;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #d0a060;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  border: 1px solid #806040;
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #d0a060;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  border: 1px solid #806040;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.modeButton {
+  flex: 1;
+  background-color: #2a2018;
+  color: #c0b090;
+  padding: 0.5rem;
+  border: 1px solid #443322;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.modeButton:hover {
+  background-color: #3a3028;
+}
+
+.modeButton.active {
+  background-color: #5a4028;
+  color: #f0e0c0;
+  border-color: #d0a060;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.closeButton {
+  margin-top: auto;
+  background-color: #4a3020;
+  color: #f0e0c0;
+  padding: 0.5rem;
+  border: 1px solid #7a5c3d;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.closeButton:hover {
+  background-color: #5a4030;
+}
+
+.historicalContext {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: rgba(30, 20, 10, 0.5);
+  border-radius: 5px;
+  border-left: 4px solid #d0a060;
+  color: #c0b090;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.errorMessage {
+  color: #ff5555;
+  margin-top: 1rem;
+  text-align: center;
+  padding: 0.5rem;
+  background-color: rgba(50, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 0, 0, 0.3);
+} 

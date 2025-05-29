@@ -1,0 +1,918 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500&display=swap');
+
+/* === MINIMAL TIMELINE - Tim Rodenbroeker Style === */
+
+.wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Improved transition properties */
+  transition: 
+    opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    filter 0.6s ease;
+}
+
+/* Full screen background image */
+.backgroundImage {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.12;
+  z-index: 1;
+  transition: opacity 0.8s ease, background-image 0.6s ease;
+  /* Add a subtle gradient overlay for better text readability */
+  background-blend-mode: multiply;
+}
+
+.backgroundImage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 40%,
+    rgba(0, 0, 0, 0.5) 70%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  z-index: 2;
+}
+
+.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translateY(0);
+  filter: blur(0px);
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.95) translateY(20px);
+  filter: blur(8px);
+}
+
+/* Enhanced entrance animations for child elements */
+.visible .currentItem,
+.visible .progressBar,
+.visible .toggleButtonContainer {
+  animation: slideInFade 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.visible .currentItem {
+  animation-delay: 0.2s;
+}
+
+.visible .filmstrip {
+  animation: filmstripSlide 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.4s;
+}
+
+.visible .progressBar {
+  animation: progressSlide 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.1s;
+}
+
+.visible .toggleButtonContainer {
+  animation-delay: 0.5s;
+}
+
+/* Keyframe for smooth slide-in effect */
+@keyframes slideInFade {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-2px) scale(1.01);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+/* Ensure hidden state for staggered animations */
+.hidden .currentItem,
+.hidden .filmstrip,
+.hidden .progressBar,
+.hidden .toggleButtonContainer {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  filter: blur(4px);
+}
+
+/* Progress Bar */
+.progressBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 100;
+}
+
+.progressFill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Author Name */
+.authorName {
+  position: fixed;
+  top: 1.5rem;
+  left: 4vw;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  z-index: 20;
+  backdrop-filter: blur(8px);
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Current Item Display */
+.currentItem {
+  position: fixed;
+  left: 4vw;
+  top: 10vh; /* Start from top rather than center to avoid transform issues */
+  bottom: 10vh; /* Maintain bottom margin */
+  max-width: 45vw;
+  max-height: 80vh; /* Prevent overflow beyond viewport */
+  overflow-y: auto; /* Allow scrolling if content is too long */
+  z-index: 10;
+  /* Add subtle backdrop and border for better readability */
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  /* Ensure content stays within bounds */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* Custom scrollbar for currentItem */
+.currentItem::-webkit-scrollbar {
+  width: 4px;
+}
+
+.currentItem::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.currentItem::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.currentItem::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.itemNumber {
+  font-size: 0.6rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.3em;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+}
+
+.itemYear {
+  font-size: 2.25rem;
+  font-weight: 100;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.5rem;
+  line-height: 0.95;
+}
+
+.itemTitle {
+  font-size: 1.125rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.itemDescription {
+  font-size: 0.75rem;
+  font-weight: 200;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.65);
+  max-width: 38ch;
+  margin-bottom: 1.5rem;
+}
+
+.interactButton {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: auto; /* Push button to bottom of flex container */
+  flex-shrink: 0; /* Prevent button from shrinking */
+  align-self: flex-start; /* Align button to start of container */
+}
+
+.interactButton:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Toggle Button */
+.toggleButtonContainer {
+  position: fixed;
+  right: 4vw;
+  top: calc(50% - 35vh - 60px);
+  z-index: 15;
+  display: flex;
+  justify-content: center;
+}
+
+.toggleButton {
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.toggleButton:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(30, 30, 30, 0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.toggleButton.stillActive {
+  border-color: rgba(100, 150, 255, 0.6);
+  color: rgba(100, 150, 255, 0.9);
+  background: rgba(20, 30, 50, 0.95);
+}
+
+.toggleButton.filmActive {
+  border-color: rgba(255, 215, 0, 0.6);
+  color: rgba(255, 215, 0, 0.9);
+  background: rgba(50, 40, 20, 0.95);
+}
+
+.toggleButton svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.toggleButton:hover svg {
+  opacity: 1;
+}
+
+.toggleLabel {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Mode Indicator */
+.modeIndicator {
+  font-size: 0.9rem;
+  font-weight: 200;
+  color: rgba(255, 215, 0, 0.7);
+  font-style: italic;
+}
+
+/* Filmstrip Timeline */
+.filmstrip {
+  position: fixed;
+  right: 4vw;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60vh;
+  width: 80px;
+  z-index: 10;
+  background: linear-gradient(to right, 
+    rgba(20, 20, 20, 0.9) 0%, 
+    rgba(40, 40, 40, 0.95) 50%, 
+    rgba(20, 20, 20, 0.9) 100%
+  );
+  border-radius: 6px;
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.filmstripContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.filmFrame {
+  position: absolute;
+  width: 68px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(60, 60, 60, 0.6);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.filmFrame.active {
+  transform: scale(1.15);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.3),
+    inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.filmFrame:hover {
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.filmHoles {
+  width: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 6px 0;
+  background: linear-gradient(to bottom, 
+    rgba(0, 0, 0, 0.8) 0%, 
+    rgba(20, 20, 20, 0.9) 50%, 
+    rgba(0, 0, 0, 0.8) 100%
+  );
+}
+
+.hole {
+  width: 4px;
+  height: 4px;
+  background: #000;
+  border-radius: 50%;
+  margin: 0 auto;
+  box-shadow: 
+    inset 0 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.frameContent {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #111;
+}
+
+.frameImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.3s ease;
+  filter: grayscale(0.3) contrast(1.1);
+}
+
+.filmFrame.active .frameImage {
+  filter: grayscale(0) contrast(1.2) brightness(1.1);
+}
+
+.frameOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, 
+    rgba(0, 0, 0, 0.9) 0%, 
+    rgba(0, 0, 0, 0.6) 50%,
+    transparent 100%
+  );
+  padding: 4px 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.frameYear {
+  font-size: 0.5rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.interactiveIndicator {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 100, 0.9);
+  filter: drop-shadow(0 0 3px rgba(255, 255, 100, 0.5));
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Navigation Hint */
+.navHint {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  z-index: 5;
+}
+
+/* Fast Scrolling Indicator */
+.fastScrollIndicator {
+  position: fixed;
+  left: 4vw;
+  top: 10vh; /* Use same positioning as currentItem */
+  bottom: 10vh;
+  max-width: 45vw;
+  max-height: 80vh; /* Prevent overflow */
+  overflow-y: auto; /* Allow scrolling if needed */
+  z-index: 15;
+  animation: fadeIn 0.3s ease;
+  /* Add backdrop for better readability */
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  /* Ensure content stays within bounds */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.muybridgeTitle {
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.95);
+  text-transform: uppercase;
+}
+
+.frameCounter {
+  font-size: 0.8rem;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* Muybridge Frame Styles */
+.muybridgeFrame {
+  border-color: rgba(255, 215, 0, 0.6) !important;
+  background: rgba(40, 35, 20, 0.9) !important;
+  box-shadow: 
+    0 0 20px rgba(255, 215, 0, 0.2),
+    inset 0 0 10px rgba(255, 215, 0, 0.1) !important;
+}
+
+.muybridgeFrame.active {
+  border-color: rgba(255, 215, 0, 1) !important;
+  box-shadow: 
+    0 0 25px rgba(255, 215, 0, 0.4),
+    inset 0 0 15px rgba(255, 215, 0, 0.2) !important;
+  transform: scale(1.2) !important;
+}
+
+.frameNumber {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.5rem;
+  font-weight: 300;
+  color: rgba(255, 215, 0, 0.8);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1px 3px;
+  border-radius: 2px;
+  line-height: 1;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+}
+
+.modalContent {
+  position: relative;
+  width: 85vw;
+  max-width: 900px;
+  height: 75vh;
+  background: rgba(16, 16, 16, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.25rem;
+  font-weight: 200;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  color: #fff;
+}
+
+/* Sketch Placeholder */
+.sketchPlaceholder {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 2rem;
+}
+
+.sketchPlaceholder h3 {
+  font-size: 1.125rem;
+  font-weight: 300;
+  margin-bottom: 0.75rem;
+}
+
+.sketchPlaceholder p {
+  font-size: 0.75rem;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .currentItem {
+    left: 3vw;
+    top: 12vh; /* Adjust for medium screens */
+    bottom: 12vh;
+    max-width: 50vw;
+    max-height: 76vh; /* Adjust for the new positioning */
+    overflow-y: auto;
+  }
+  
+  .toggleButtonContainer {
+    right: 3vw;
+  }
+  
+  .filmstrip {
+    right: 3vw;
+    height: 58vh;
+    width: 75px;
+  }
+  
+  .filmFrame {
+    width: 63px;
+    height: 51px;
+  }
+  
+  .itemYear {
+    font-size: 2rem;
+  }
+  
+  .itemTitle {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .currentItem {
+    left: 1.5rem;
+    top: 15vh; /* Adjust for tablet screens */
+    bottom: 15vh;
+    max-width: calc(100vw - 8rem);
+    max-height: 70vh; /* Adjust for the new positioning */
+    overflow-y: auto;
+    padding: 1.5rem; /* Reduce padding to save space */
+  }
+  
+  .authorName {
+    left: 1.5rem;
+    top: 2.5rem;
+    font-size: 0.7rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .toggleButtonContainer {
+    right: 1.5rem;
+    top: calc(50% - 30vh - 50px);
+  }
+  
+  .toggleButton {
+    padding: 6px 10px;
+    font-size: 0.65rem;
+  }
+  
+  .toggleButton svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .itemYear {
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .itemTitle {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .itemDescription {
+    font-size: 0.7rem;
+    margin-bottom: 1.25rem;
+    max-width: 32ch;
+    flex: 1; /* Allow description to take available space */
+  }
+  
+  .filmstrip {
+    right: 1.5rem;
+    height: 55vh;
+    width: 70px;
+  }
+  
+  .filmFrame {
+    width: 58px;
+    height: 46px;
+  }
+  
+  .frameYear {
+    font-size: 0.45rem;
+  }
+  
+  .modalContent {
+    width: 92vw;
+    height: 80vh;
+  }
+  
+  .navHint {
+    font-size: 0.55rem;
+    bottom: 2vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .currentItem {
+    left: 1rem;
+    top: 10vh; /* Adjust for mobile screens */
+    bottom: 10vh;
+    max-width: calc(100vw - 6rem);
+    max-height: 80vh; /* Allow more height on mobile since we removed transform */
+    overflow-y: auto;
+    padding: 1rem; /* Further reduce padding for mobile */
+  }
+  
+  .authorName {
+    left: 1rem;
+    top: 2rem;
+    font-size: 0.65rem;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .toggleButtonContainer {
+    right: 1rem;
+    top: calc(50% - 25vh - 45px);
+  }
+  
+  .toggleButton {
+    padding: 5px 8px;
+    font-size: 0.6rem;
+    gap: 4px;
+  }
+  
+  .toggleButton svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .toggleLabel {
+    font-size: 0.6rem;
+  }
+  
+  .itemYear {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem; /* Reduce margin to save space */
+  }
+  
+  .itemTitle {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem; /* Reduce margin to save space */
+  }
+  
+  .itemDescription {
+    font-size: 0.65rem;
+    max-width: 28ch;
+    margin-bottom: 1rem; /* Reduce margin to save space */
+    flex: 1; /* Allow description to take available space */
+  }
+  
+  .filmstrip {
+    right: 1rem;
+    width: 65px;
+  }
+  
+  .filmFrame {
+    width: 52px;
+    height: 40px;
+  }
+  
+  .hole {
+    width: 3px;
+    height: 3px;
+  }
+  
+  .frameYear {
+    font-size: 0.4rem;
+  }
+  
+  .interactButton {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.8rem;
+    margin-top: auto; /* Push button to bottom of container */
+    flex-shrink: 0; /* Prevent button from shrinking */
+  }
+}
+
+/* Enhanced Animations */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px) scale(0.98); 
+    filter: blur(2px);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-2px) scale(1.01);
+    filter: blur(0.5px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+    filter: blur(0px);
+  }
+}
+
+@keyframes filmstripSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(40px) scale(0.9);
+    filter: blur(3px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-50%) translateX(-3px) scale(1.02);
+    filter: blur(0.5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.currentItem > * {
+  animation: fadeIn 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+}
+
+.currentItem .itemNumber { animation-delay: 0.3s; }
+.currentItem .itemYear { animation-delay: 0.4s; }
+.currentItem .itemTitle { animation-delay: 0.5s; }
+.currentItem .itemDescription { animation-delay: 0.6s; }
+.currentItem .interactButton { animation-delay: 0.7s; }
+
+/* Micro-interactions */
+.progressBar {
+  box-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.progressFill {
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+/* Focus states for accessibility */
+.filmFrame:focus {
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 4px;
+}
+
+.interactButton:focus {
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+.closeButton:focus {
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+.toggleButton:focus {
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+@keyframes progressSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.005);
+  }
+}
+
+.visible .wrapper {
+  animation: breathe 8s ease-in-out infinite;
+} 

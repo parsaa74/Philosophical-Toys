@@ -1,0 +1,193 @@
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
+
+.container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  transition: opacity 0.8s ease-in-out;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+}
+
+.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 2rem;
+  transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+}
+
+.titleVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.titleHidden {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.title h1 {
+  font-family: 'Fredericka the Great', serif;
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.05em;
+}
+
+.title p {
+  font-family: 'IM Fell English', serif;
+  font-size: 1.2rem;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+  position: relative;
+}
+
+.contentVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.contentHidden {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@media (min-width: 768px) {
+  .content {
+    flex-direction: row;
+  }
+}
+
+.sketchContainer {
+  flex: 1;
+  height: 500px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.infoPanel {
+  flex: 1;
+  padding: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.infoPanel h2 {
+  font-family: 'Fredericka the Great', serif;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.description {
+  font-family: 'IM Fell English', serif;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.instructions {
+  margin-top: 1rem;
+}
+
+.instructions h3 {
+  font-family: 'IM Fell English', serif;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.instructions ul {
+  font-family: 'IM Fell English', serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-left: 1.5rem;
+}
+
+.instructions li {
+  margin-bottom: 0.5rem;
+}
+
+.note {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.historySection {
+  margin-top: 1rem;
+}
+
+.historySection h3 {
+  font-family: 'IM Fell English', serif;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.historySection p {
+  font-family: 'IM Fell English', serif;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.loadingContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.loadingText {
+  font-family: 'IM Fell English', serif;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+/* Vignette effect */
+.container::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.4) 80%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  pointer-events: none;
+  z-index: -1;
+}

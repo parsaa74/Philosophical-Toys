@@ -1,0 +1,152 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvasContainer {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px 20px;
+  border-radius: 30px;
+  z-index: 10;
+}
+
+.button {
+  background-color: #8B4513;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #A0522D;
+}
+
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.label {
+  color: white;
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+}
+
+.slider {
+  width: 120px;
+}
+
+.infoButton {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.infoButton:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.infoOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.infoContent {
+  background-color: rgba(30, 30, 30, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 500px;
+  text-align: center;
+}
+
+.infoContent h2 {
+  font-family: 'Fredericka the Great', serif;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.infoContent p {
+  font-family: 'IM Fell English', serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.closeButton {
+  background-color: #8B4513;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 1rem;
+}
+
+.closeButton:hover {
+  background-color: #A0522D;
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .sliderContainer {
+    width: 100%;
+  }
+  
+  .slider {
+    width: 100px;
+  }
+}

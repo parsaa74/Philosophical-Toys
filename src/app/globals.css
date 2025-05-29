@@ -1,8 +1,27 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Color Scheme */
+  --color-black: #000;
+  --color-white: #FFF;
+  --color-accent: #6A5A55; /* oxidized iron accent */
+  
+  /* Default Light Theme */
+  --background: var(--color-white);
+  --foreground: var(--color-black);
+  --accent: var(--color-accent);
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 4rem;
+  
+  /* Typography - Tim Rodenbroeker inspired */
+  --font-primary: var(--font-space-grotesk, 'Space Grotesk', sans-serif);
+  --font-secondary: var(--font-inter, 'Inter', sans-serif);
 }
 
 @theme inline {
@@ -14,13 +33,81 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--color-black);
+    --foreground: var(--color-white);
+  }
+}
+
+@layer base {
+  html,
+  body,
+  body > div:first-child,
+  div#__next {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    /* Keep existing font-size */
+    font-size: 16px;
+    /* Prevent scrolling on the html element itself */
+    overflow: hidden;
+  }
+
+  body {
+    /* Allow scrolling if content overflows */
+    overflow: auto;
+  }
+
+  div#__next {
+     /* Ensure #__next can contain block elements correctly */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  h1, h2, h3, h4, h5 {
+    font-variation-settings: "wght" 600;
+    -webkit-text-stroke: 1px var(--foreground);
+    color: transparent;
+  }
+  
+  h1 {
+    font-size: clamp(2rem, 5vw, 4rem);
+    line-height: 1.1;
+  }
+  
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    line-height: 1.2;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-feature-settings: "salt" on, "ss01" on;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+}
+
+.text-stroke {
+  -webkit-text-stroke: 1px var(--foreground);
+  color: transparent;
+}
+
+.asymmetric-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-lg);
 }

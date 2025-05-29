@@ -1,0 +1,164 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.filmFrame {
+  background-color: rgba(15, 15, 15, 0.85);
+  border: 2px solid rgba(40, 40, 40, 0.8);
+  border-radius: 8px;
+  padding: 30px;
+  overflow: hidden;
+  position: relative;
+}
+
+.filmFrame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg, 
+    rgba(0, 0, 0, 0.15), 
+    rgba(0, 0, 0, 0.15) 1px, 
+    transparent 1px, 
+    transparent 4px
+  );
+  pointer-events: none;
+}
+
+.innerFrame {
+  border: 1px solid rgba(100, 100, 100, 0.2);
+  padding: 30px;
+  position: relative;
+}
+
+.contentWrapper {
+  text-align: center;
+}
+
+.title {
+  font-family: 'IM Fell English', serif;
+  font-size: 2.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.subtitle {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0;
+  line-height: 1.4;
+}
+
+.wordSpan {
+  display: inline-block;
+  margin-right: 0.4rem;
+}
+
+.buttonContainer {
+  position: absolute;
+  bottom: -60px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.skipButton {
+  background-color: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'IM Fell English', serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: color 0.3s ease;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+}
+
+.skipButton:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.continueButton {
+  background-color: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(80, 80, 80, 0.6);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'IM Fell English', serif;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.continueButton:hover {
+  background-color: rgba(50, 50, 50, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 1.6rem;
+  }
+  
+  .subtitle {
+    font-size: 1.2rem;
+  }
+}
+
+/* Vignette effect */
+.innerFrame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.4) 80%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  pointer-events: none;
+}
+
+/* Film grain animation */
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0) }
+  10% { transform: translate(-2%, -2%) }
+  20% { transform: translate(-4%, 2%) }
+  30% { transform: translate(2%, -4%) }
+  40% { transform: translate(-2%, 6%) }
+  50% { transform: translate(-4%, 2%) }
+  60% { transform: translate(6%, 0) }
+  70% { transform: translate(0, 4%) }
+  80% { transform: translate(-6%, 0) }
+  90% { transform: translate(4%, 2%) }
+}
+
+/* Flicker animation */
+.innerFrame {
+  animation: flicker 8s infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  95.9% { opacity: 1; }
+  96% { opacity: 0.8; }
+  96.9% { opacity: 1; }
+  97% { opacity: 0.9; }
+  98% { opacity: 1; }
+} 
