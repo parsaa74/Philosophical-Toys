@@ -1,19 +1,25 @@
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const isAnalyze = process.env.ANALYZE === 'true';
+const isGitHubPages = process.env.GITHUB_PAGES === 'true' || process.env.NODE_ENV === 'production';
 
 const nextConfig = {
   /* config options here */
   output: 'export',
   trailingSlash: true,
-  basePath: process.env.NODE_ENV === 'production' ? '/Philosophical-Toys' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/Philosophical-Toys/' : '',
+  basePath: isGitHubPages ? '/Philosophical-Toys' : '',
+  assetPrefix: isGitHubPages ? '/Philosophical-Toys/' : '',
   poweredByHeader: false,
   reactStrictMode: true,
   
   // Disable ESLint during build to allow it to complete
   eslint: {
     ignoreDuringBuilds: true,
+  },
+
+  // Environment variables available at build time
+  env: {
+    NEXT_PUBLIC_BASE_PATH: isGitHubPages ? '/Philosophical-Toys' : '',
   },
 
   // Optimize package imports to reduce bundle size

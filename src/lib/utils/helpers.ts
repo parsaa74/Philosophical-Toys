@@ -58,4 +58,12 @@ export function randomInt(min: number, max: number): number {
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
   return str.slice(0, length) + '...';
+}
+
+/**
+ * Gets the correct asset path with base path for production
+ */
+export function getAssetPath(path: string): string {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  return `${basePath}${path}`;
 } 

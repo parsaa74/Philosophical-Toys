@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import { getAssetPath } from '../../lib/utils/helpers';
 
 interface ThaumatropeProps {
   rotation?: [number, number, number];
@@ -12,8 +13,8 @@ function Thaumatrope({ rotation = [0, 0, 0] }: ThaumatropeProps) {
   const textureLoader = new THREE.TextureLoader();
 
   // Load both sides of the thaumatrope
-  const textureFront = textureLoader.load('/images/thaumatrope/bird.png');
-  const textureBack = textureLoader.load('/images/thaumatrope/cage.png');
+  const textureFront = textureLoader.load(getAssetPath('/images/thaumatrope/bird.png'));
+  const textureBack = textureLoader.load(getAssetPath('/images/thaumatrope/cage.png'));
 
   useFrame(() => {
     if (meshRef.current) {
