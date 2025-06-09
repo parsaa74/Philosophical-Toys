@@ -53,6 +53,7 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
   const [isFastScrolling, setIsFastScrolling] = useState(false);
   const [muybridgeFrame, setMuybridgeFrame] = useState(0);
   const [isFilmMode, setIsFilmMode] = useState(false); // Manual toggle for film/still mode
+  const [isManualFrameSelection, setIsManualFrameSelection] = useState(false); // Track manual frame selection
   
   const animationRef = useRef<number | null>(null);
   const targetIndexRef = useRef(0);
@@ -62,13 +63,14 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
   const lastScrollTime = useRef(0);
   const fastScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const muybridgeAnimationRef = useRef<number | null>(null);
+  const manualSelectionTimeoutRef = useRef<number | null>(null);
   const fastScrollCountRef = useRef(0);
   
   const timelineData = importedTimelineData;
 
   // Muybridge animation loop
   const animateMuybridge = useCallback(() => {
-    const frameInterval = 1000 / 24; // 24 FPS = ~41.67ms per frame
+    const frameInterval = 1000 / 108; // Slightly reduced to 108 FPS = ~9.26ms per frame (10% slower than 120 FPS)
     let lastFrameTime = performance.now();
     
     const animate = () => {
@@ -85,7 +87,7 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
 
   // Start/stop Muybridge animation
   useEffect(() => {
-    if (isFastScrolling || isFilmMode) {
+    if ((isFastScrolling || isFilmMode) && !isManualFrameSelection) {
       animateMuybridge();
     } else {
       if (muybridgeAnimationRef.current) {
@@ -100,7 +102,7 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
         muybridgeAnimationRef.current = null;
       }
     };
-  }, [isFastScrolling, isFilmMode, animateMuybridge]);
+  }, [isFastScrolling, isFilmMode, isManualFrameSelection, animateMuybridge]);
 
   // Smooth scroll animation with easing
   const animateToTarget = useCallback(() => {
@@ -200,8 +202,34 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
   // Toggle between film mode and still mode
   const toggleFilmMode = useCallback(() => {
     setIsFilmMode(prev => !prev);
+    // Reset manual selection when switching modes
+    setIsManualFrameSelection(false);
+    if (manualSelectionTimeoutRef.current) {
+      clearTimeout(manualSelectionTimeoutRef.current);
+      manualSelectionTimeoutRef.current = null;
+    }
     onInteraction?.(isFilmMode ? 'still-mode' : 'film-mode');
   }, [isFilmMode, onInteraction]);
+
+  // Handle manual frame selection in film mode
+  const handleManualFrameSelection = useCallback((frameIndex: number) => {
+    setMuybridgeFrame(frameIndex);
+    
+    if (isFilmMode) {
+      // Pause animation temporarily when user manually selects a frame
+      setIsManualFrameSelection(true);
+      
+      // Clear any existing timeout
+      if (manualSelectionTimeoutRef.current) {
+        clearTimeout(manualSelectionTimeoutRef.current);
+      }
+      
+      // Resume animation after 2 seconds
+      manualSelectionTimeoutRef.current = window.setTimeout(() => {
+        setIsManualFrameSelection(false);
+      }, 2000);
+    }
+  }, [isFilmMode]);
 
   // Event handlers
   useEffect(() => {
@@ -262,6 +290,7 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
       document.removeEventListener('touchend', handleTouchEnd);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (fastScrollTimeoutRef.current) clearTimeout(fastScrollTimeoutRef.current);
+      if (manualSelectionTimeoutRef.current) clearTimeout(manualSelectionTimeoutRef.current);
     };
   }, [isVisible, handleScroll, isModalActive, closeModal]);
 
@@ -299,25 +328,71 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
     };
   });
 
-  // Calculate Muybridge horse frames for fast scrolling
+  // Calculate Muybridge horse frames for fast scrolling and film mode
   const muybridgeFrames = () => {
-    // Create 7 static frames with the center one (index 3) showing the animation
-    const staticFrames = [];
-    for (let i = 0; i < 7; i++) {
-      const offset = (i - 3) * 44; // Center frame at index 3
-      const isCenter = i === 3;
-      const opacity = isCenter ? 1 : 0.4; // Center frame is fully visible, others are dimmed
+    const frames = [];
+    
+    if (isFilmMode && !isFastScrolling) {
+      // In film mode, create multiple cycles of frames to ensure seamless coverage
+      const totalFrames = MUYBRIDGE_IMAGES.length;
+      const visibleRange = 15; // Increased range for denser blur field around static frame
       
-      staticFrames.push({
-        imageSrc: isCenter ? MUYBRIDGE_IMAGES[muybridgeFrame] : MUYBRIDGE_IMAGES[0], // Animation only in center
-        index: i,
-        offset,
-        opacity,
-        isActive: isCenter,
-        frameNumber: isCenter ? muybridgeFrame + 1 : '—'
-      });
+      // Create 3 cycles of frames (before, current, after) to ensure no gaps
+      for (let cycle = -1; cycle <= 1; cycle++) {
+        for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+          // Calculate the position including the cycle offset
+          const absoluteFramePosition = frameIndex + (cycle * totalFrames);
+          const relativePosition = absoluteFramePosition - muybridgeFrame;
+          const offset = relativePosition * 25; // Ultra-tight spacing - frames will blend together
+          
+          // Only include frames within visible range and skip the center frame
+          if (Math.abs(relativePosition) <= visibleRange && offset !== 0) {
+            frames.push({
+              imageSrc: MUYBRIDGE_IMAGES[frameIndex], // Each frame always shows the same horse gallop frame
+              index: frameIndex,
+              offset,
+              opacity: 0.6, // All moving frames are dimmed
+              isActive: false,
+              frameNumber: frameIndex + 1,
+              cycle // Track which cycle this frame belongs to for unique keys
+            });
+          }
+        }
+      }
+    } else {
+      // Fast scrolling mode: Create 7 static frames with the center one (index 3) showing the animation
+      for (let i = 0; i < 7; i++) {
+        const offset = (i - 3) * 44; // Center frame at index 3
+        const isCenter = i === 3;
+        const opacity = isCenter ? 1 : 0.4; // Center frame is fully visible, others are dimmed
+        
+        frames.push({
+          imageSrc: isCenter ? MUYBRIDGE_IMAGES[muybridgeFrame] : MUYBRIDGE_IMAGES[0], // Animation only in center
+          index: i,
+          offset,
+          opacity,
+          isActive: isCenter,
+          frameNumber: isCenter ? muybridgeFrame + 1 : '—'
+        });
+      }
     }
-    return staticFrames;
+    
+    return frames;
+  };
+
+  // Get the static highlighted frame for film mode
+  const getStaticHighlightedFrame = () => {
+    if (isFilmMode && !isFastScrolling) {
+      return {
+        imageSrc: MUYBRIDGE_IMAGES[muybridgeFrame],
+        index: muybridgeFrame,
+        offset: 0, // Always centered
+        opacity: 1, // Fully visible
+        isActive: true,
+        frameNumber: muybridgeFrame + 1
+      };
+    }
+    return null;
   };
 
   return (
@@ -330,6 +405,20 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
             backgroundImage: `url(${currentItem.image})`,
           }}
         />
+      )}
+      {/* Muybridge background in film mode */}
+      {isFilmMode && !isFastScrolling && (
+        <div className={`${styles.backgroundImage} ${styles.muybridgeBackgroundGrid}`}>
+          {MUYBRIDGE_IMAGES.map((src, i) => (
+            <img
+              key={`muybridge-bg-${i}`}
+              src={src}
+              alt={`Muybridge horse frame ${i + 1}`}
+              className={styles.muybridgeBgFrame}
+              draggable={false}
+            />
+          ))}
+        </div>
       )}
       
       {/* Progress indicator */}
@@ -418,41 +507,95 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
       <div className={styles.filmstrip}>
         <div className={styles.filmstripContainer}>
           {(isFastScrolling || isFilmMode) ? (
-            // Show focused Muybridge animation with one frame in focus
-            muybridgeFrames().map(({ imageSrc, index, offset, opacity, isActive, frameNumber }) => (
-              <div
-                key={`muybridge-${index}`}
-                className={`${styles.filmFrame} ${isActive ? styles.active : ''} ${styles.muybridgeFrame}`}
-                style={{
-                  transform: `translateY(${offset}px)`,
-                  opacity,
-                  pointerEvents: 'none' // Disable interaction during fast scroll
-                }}
-              >
-                <div className={styles.filmHoles}>
-                  <div className={styles.hole}></div>
-                  <div className={styles.hole}></div>
-                  <div className={styles.hole}></div>
-                  <div className={styles.hole}></div>
-                </div>
-                <div className={styles.frameContent}>
-                  <img 
-                    src={imageSrc}
-                    alt={isActive ? `Horse motion frame ${muybridgeFrame + 1}` : 'Context frame'}
-                    className={styles.frameImage}
-                  />
-                  <div className={styles.frameOverlay}>
-                    <div className={styles.frameNumber}>{frameNumber}</div>
+            <>
+              {/* Moving background frames */}
+              {muybridgeFrames().map(({ imageSrc, index, offset, opacity, isActive, frameNumber, cycle }) => (
+                <div
+                  key={`muybridge-bg-${cycle}-${index}`}
+                  className={`${styles.filmFrame} ${isActive ? styles.active : ''} ${styles.muybridgeFrame}`}
+                  style={{
+                    transform: `translate3d(0, ${offset}px, 0)`, // Use 3D transform for hardware acceleration
+                    opacity,
+                    pointerEvents: isFastScrolling ? 'none' : 'auto', // Disable interaction only during fast scroll
+                    willChange: 'transform', // Hint to browser for optimization
+                    filter: 'blur(0.5px)', // Minimal motion blur for better frame visibility
+                    transition: 'none' // No transitions - instant movement for maximum speed
+                  }}
+                  onClick={!isFastScrolling ? () => handleManualFrameSelection(index) : undefined}
+                  onKeyDown={!isFastScrolling ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleManualFrameSelection(index);
+                    }
+                  } : undefined}
+                  tabIndex={!isFastScrolling ? 0 : -1}
+                  role={!isFastScrolling ? "button" : undefined}
+                  aria-label={!isFastScrolling ? `Jump to frame ${frameNumber}` : undefined}
+                >
+                  <div className={styles.filmHoles}>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                  </div>
+                  <div className={styles.frameContent}>
+                    <img 
+                      src={imageSrc}
+                      alt={isActive ? `Horse motion frame ${muybridgeFrame + 1}` : 'Context frame'}
+                      className={styles.frameImage}
+                    />
+                    <div className={styles.frameOverlay}>
+                      <div className={styles.frameNumber}>{frameNumber}</div>
+                    </div>
+                  </div>
+                  <div className={styles.filmHoles}>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
                   </div>
                 </div>
-                <div className={styles.filmHoles}>
-                  <div className={styles.hole}></div>
-                  <div className={styles.hole}></div>
-                  <div className={styles.hole}></div>
-                  <div className={styles.hole}></div>
+              ))}
+              
+              {/* Static highlighted frame (film mode only) */}
+              {getStaticHighlightedFrame() && (
+                <div
+                  className={`${styles.filmFrame} ${styles.active} ${styles.muybridgeFrame}`}
+                  style={{
+                    transform: `translate3d(0, 0, 0)`, // Use 3D transform for hardware acceleration
+                    opacity: 1,
+                    zIndex: 10, // Ensure it's on top
+                    pointerEvents: 'none', // No interaction with the static frame
+                    willChange: 'auto', // Static frame doesn't need transform optimization
+                    filter: 'blur(0px)', // Ensure static frame is crystal clear
+                    transition: 'none' // No transitions on static frame
+                  }}
+                >
+                  <div className={styles.filmHoles}>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                  </div>
+                  <div className={styles.frameContent}>
+                    <img 
+                      src={getStaticHighlightedFrame()!.imageSrc}
+                      alt={`Horse motion frame ${getStaticHighlightedFrame()!.frameNumber}`}
+                      className={styles.frameImage}
+                    />
+                    <div className={styles.frameOverlay}>
+                      <div className={styles.frameNumber}>{getStaticHighlightedFrame()!.frameNumber}</div>
+                    </div>
+                  </div>
+                  <div className={styles.filmHoles}>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                    <div className={styles.hole}></div>
+                  </div>
                 </div>
-              </div>
-            ))
+              )}
+            </>
           ) : (
             // Show regular timeline frames
             filmstripFrames.map(({ item, index, offset, opacity, isActive }) => (
@@ -506,7 +649,9 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
 
       {/* Navigation hint */}
       <div className={styles.navHint}>
-        {(isFastScrolling || isFilmMode) ? 'Showing Muybridge horse motion' : 'scroll, use arrow keys, or click filmstrip'}
+        {isFastScrolling ? 'Showing Muybridge horse motion' : 
+         isFilmMode ? 'Film projector mode • Fixed viewer window • Frames move through highlight' : 
+         'scroll, use arrow keys, or click filmstrip'}
       </div>
 
       {/* Modal */}
