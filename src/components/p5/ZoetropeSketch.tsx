@@ -14,35 +14,21 @@ export function ZoetropeSketch({
   onClose,
   className = ''
 }: ZoetropeSketchProps) {
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 600, height: 450 });
-  const [debugMode, setDebugMode] = useState(false);
-  const [terminalBuffer, setTerminalBuffer] = useState('');
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Map sizes to responsive multipliers
+  // Size multipliers for responsive design
   const sizeMultipliers = {
     small: 0.7,
     medium: 1.0,
     large: 1.4
   };
 
-  const baseWidth = 500;
-  const baseHeight = 375;
+  const baseWidth = 800;
+  const baseHeight = 600;
   const multiplier = sizeMultipliers[size];
 
-  // Add terminal output helper
-  const addTerminalOutput = useCallback((message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setTerminalOutput(prev => {
-      const newOutput = [...prev, `[${timestamp}] ${message}`];
-      return newOutput.slice(-8); // Keep only last 8 messages
-    });
-  }, []);
-
-  // Update dimensions based on container size
+  // Responsive container sizing
   useEffect(() => {
     const updateDimensions = () => {
       if (!containerRef.current) return;
@@ -51,8 +37,9 @@ export function ZoetropeSketch({
       const containerWidth = rect.width || 800;
       const containerHeight = rect.height || 600;
       
-      const targetWidth = Math.min(baseWidth * multiplier, containerWidth * 0.9);
-      const targetHeight = Math.min(baseHeight * multiplier, containerHeight * 0.8);
+      // Fit to container while maintaining aspect ratio
+      const targetWidth = Math.min(baseWidth * multiplier, containerWidth - 40);
+      const targetHeight = Math.min(baseHeight * multiplier, containerHeight - 40);
       
       const aspectRatio = baseWidth / baseHeight;
       let finalWidth = targetWidth;
@@ -71,374 +58,159 @@ export function ZoetropeSketch({
     };
 
     updateDimensions();
-
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => resizeObserver.disconnect();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
   }, [multiplier]);
 
-  // Initialize terminal
-  useEffect(() => {
-    addTerminalOutput('UNIX ZOETROPE TERMINAL v2.3.7 INITIALIZED');
-    addTerminalOutput('System ready for operation...');
-    addTerminalOutput('Type commands or click to interact');
-  }, [addTerminalOutput]);
-
   const sketch = useCallback((p5: p5Types) => {
-    // Unix Terminal Zoetrope System Variables
-    let SYSTEM = {
-      angularPosition: 0,
-      angularVelocity: 0,
-      targetAngularVelocity: 0,
-      cameraDistance: -200,
-      targetCameraDistance: -200,
-      cameraElevation: 0,
-      targetElevation: 0,
-      cameraPan: 0,
-      targetPan: 0,
-      frameCount: 11,
-      colorScheme: {
-        primary: [0, 255, 65, 255] as [number, number, number, number],
-        secondary: [255, 100, 0, 255] as [number, number, number, number],
-        background: [0, 0, 0, 255] as [number, number, number, number],
-        accent: [255, 255, 255, 255] as [number, number, number, number]
-      },
-      performance: {
-        frameTime: 0,
-        lastFrameTime: 0
-      }
-    };
+    // Core variables matching your original code
+    let strip: p5Types.Image;
+    let angle = 0;
+    let avel = 0;
+    let tavel = 0;
+    let zoom = -3000;
+    let ztarget = -3000;
+    let frames = 11;
+    let c = [91, 70, 40, 255] as [number, number, number, number];
+    let tilt = 0;
+    let ttarget = 0;
+    let offset = 0;
+    let otarget = 0;
+    let eyeZ: number;
 
-    let animationTexture: p5Types.Graphics;
-    let matrixDrops: Array<{y: number, speed: number, char: string}> = [];
-    const MATRIX_COLUMNS = 30;
-    const matrixChars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    p5.preload = () => {
+      strip = p5.loadImage('/images/zoetrope9.jpg');
+    };
 
     p5.setup = () => {
       const canvas = p5.createCanvas(dimensions.width, dimensions.height, p5.WEBGL);
       canvas.parent('zoetrope-container');
       
-      // Initialize matrix rain
-      for (let i = 0; i < MATRIX_COLUMNS; i++) {
-        matrixDrops[i] = {
-          y: p5.random(-dimensions.height, 0),
-          speed: p5.random(2, 6),
-          char: p5.random(matrixChars.split(''))
-        };
-      }
-
-      createAnimationTexture();
-      p5.frameRate(60);
+      eyeZ = (dimensions.height / 2.0) / p5.tan(p5.PI * 30.0 / 180.0);
+      p5.perspective(p5.PI / 5.0, dimensions.width / dimensions.height, eyeZ / 10.0, eyeZ * 10.0);
+      p5.tint(c);
+      p5.frameRate(55); // Your preferred frame rate
     };
-
-    function createAnimationTexture() {
-      // Create a horizontal strip of Unix-themed animation frames
-      const frameWidth = 80;
-      const frameHeight = 60;
-      const totalFrames = SYSTEM.frameCount;
-      
-      animationTexture = p5.createGraphics(frameWidth * totalFrames, frameHeight);
-      animationTexture.background(0, 20, 0); // Dark green background
-      
-      for (let i = 0; i < totalFrames; i++) {
-        const x = i * frameWidth;
-        const progress = i / totalFrames;
-        
-        // Draw ASCII-style animation frames
-        animationTexture.fill(0, 255, 65); // Matrix green
-        animationTexture.textAlign(p5.CENTER, p5.CENTER);
-        animationTexture.textSize(8);
-        animationTexture.textFont('monospace');
-        
-        // Create a simple character-based animation
-        const chars = ['█', '▓', '▒', '░', '▓', '█', '▒', '░', '▓', '▒', '█'];
-        const char = chars[i];
-        
-        // Draw multiple characters in a pattern
-        for (let row = 0; row < 6; row++) {
-          for (let col = 0; col < 8; col++) {
-            const charX = x + col * 10 + 5;
-            const charY = row * 10 + 5;
-            
-            // Create wave effect
-            const wave = Math.sin(progress * p5.TWO_PI + col * 0.5 + row * 0.3) * 2;
-            const alpha = 100 + Math.sin(progress * p5.TWO_PI * 2 + col + row) * 155;
-            
-            animationTexture.fill(0, 255, 65, alpha);
-            animationTexture.text(char, charX, charY + wave);
-          }
-        }
-        
-        // Add frame border
-        animationTexture.stroke(255, 100, 0, 150);
-        animationTexture.strokeWeight(1);
-        animationTexture.noFill();
-        animationTexture.rect(x + 2, 2, frameWidth - 4, frameHeight - 4);
-      }
-    }
 
     p5.draw = () => {
-      // Performance monitoring
-      SYSTEM.performance.frameTime = p5.millis() - SYSTEM.performance.lastFrameTime;
-      SYSTEM.performance.lastFrameTime = p5.millis();
-
-      configureScene();
-      renderZoetropeDrum();
-      renderViewingSlits();
+      if (!strip) return;
       
-      // Switch to 2D for overlays
-      p5.camera();
-      p5.ortho();
-      p5.resetMatrix();
-      
-      renderMatrixRain();
-      renderTerminalInterface();
-      
-      if (debugMode) {
-        renderDebugOverlay();
-      }
-      
-      if (showInstructions) {
-        renderInstructions();
-      }
+      setScene();
+      drawCylinder();
+      drawFins();
+      checkKeys();
     };
 
-    function configureScene() {
-      // Terminal-black background
-      p5.background(...SYSTEM.colorScheme.background);
+    function setScene() {
+      p5.background(0);
+      p5.ambientLight(200);
+      p5.pointLight(80, 80, 80, dimensions.width, dimensions.height, 0);
       
-      // Unix-style lighting
-      p5.ambientLight(30, 100, 30);
-      p5.directionalLight(0, 255, 100, -1, 0.5, -1);
-      p5.pointLight(255, 150, 0, dimensions.width * 0.3, dimensions.height * 0.3, 100);
+      ztarget = p5.constrain(ztarget, -3200, -280);
+      zoom = p5.lerp(zoom, ztarget, 0.05);
+      p5.translate(0, -100, zoom);
       
-      // Camera system
-      SYSTEM.targetCameraDistance = p5.constrain(SYSTEM.targetCameraDistance, -400, -100);
-      SYSTEM.cameraDistance = p5.lerp(SYSTEM.cameraDistance, SYSTEM.targetCameraDistance, 0.08);
+      ttarget = p5.map(p5.mouseY, 0, dimensions.height, p5.PI / 9, -p5.PI / 9);
+      tilt = p5.lerp(tilt, ttarget, 0.1);
       
-      // Mouse controls (scaled for component size)
-      const mouseXNorm = p5.map(p5.mouseX, -dimensions.width/2, dimensions.width/2, -1, 1);
-      const mouseYNorm = p5.map(p5.mouseY, -dimensions.height/2, dimensions.height/2, -1, 1);
+      otarget = p5.map(p5.mouseX, 0, dimensions.width, -p5.PI / 6, p5.PI / 6);
+      offset = p5.lerp(offset, otarget, 0.05);
       
-      SYSTEM.targetElevation = mouseYNorm * p5.PI / 12;
-      SYSTEM.cameraElevation = p5.lerp(SYSTEM.cameraElevation, SYSTEM.targetElevation, 0.12);
+      p5.rotateX(tilt);
+      p5.rotateY(angle + offset);
       
-      SYSTEM.targetPan = mouseXNorm * p5.PI / 8;
-      SYSTEM.cameraPan = p5.lerp(SYSTEM.cameraPan, SYSTEM.targetPan, 0.08);
-      
-      p5.translate(0, -20, SYSTEM.cameraDistance);
-      p5.rotateX(SYSTEM.cameraElevation);
-      p5.rotateY(SYSTEM.angularPosition + SYSTEM.cameraPan);
-      
-      // Update rotation
-      SYSTEM.angularPosition += SYSTEM.angularVelocity;
-      SYSTEM.angularVelocity = p5.lerp(SYSTEM.angularVelocity, SYSTEM.targetAngularVelocity, 0.06);
-      SYSTEM.angularVelocity = p5.constrain(SYSTEM.angularVelocity, -0.3, 0.3);
+      angle += avel;
+      avel = p5.lerp(avel, tavel, 0.05);
+      avel = p5.constrain(avel, -0.3, 0.3);
     }
 
-    function renderZoetropeDrum() {
-      if (!animationTexture) return;
-      
+    function drawCylinder() {
       p5.push();
-      
-      // Main cylinder with animation texture
-      p5.texture(animationTexture);
+      p5.texture(strip);
       p5.noStroke();
-      p5.translate(0, 20, 0);
-      
-      const radius = dimensions.width * 0.15;
-      const height = dimensions.height * 0.25;
-      
-      p5.cylinder(radius, height, 24, 1, false, false);
-      
-      // Outer ring with Unix-green glow
-      p5.specularMaterial(...SYSTEM.colorScheme.primary);
-      p5.cylinder(radius + 3, height, 24, 1, false, false);
-      
+      p5.translate(0, strip.height, 0);
+      p5.cylinder(strip.width / p5.TWO_PI, strip.height, 24, 1, false, false);
+      p5.specularMaterial(c);
+      p5.cylinder(strip.width / p5.TWO_PI + 5, strip.height, 24, 1, false, false);
       p5.pop();
-      
-      // Top and bottom rings
-      for (let yPos = -height/3; yPos <= height; yPos += height * 0.8) {
+
+      for (let y = -strip.height / 2; y <= 3 * strip.height / 2; y += strip.height) {
         p5.push();
-        p5.specularMaterial(...SYSTEM.colorScheme.secondary);
+        p5.specularMaterial(c);
         p5.noStroke();
-        p5.translate(0, yPos, 0);
+        p5.translate(0, y, 0);
         p5.rotateX(p5.PI / 2);
-        p5.torus(radius + 3, 6);
+        p5.torus(strip.width / p5.TWO_PI + 5, 15);
         p5.pop();
       }
     }
 
-    function renderViewingSlits() {
-      const radius = dimensions.width * 0.15;
-      const height = dimensions.height * 0.25;
-      
+    function drawFins() {
       p5.push();
-      
-      for (let i = 0; i < SYSTEM.frameCount; i++) {
-        const slitAngle = p5.map(i, 0, SYSTEM.frameCount, 0, p5.TWO_PI);
-        
+      const w = strip.width / (1.15 * frames);
+      for (let i = 0; i < frames; i++) {
+        const a = p5.map(i, 0, frames, 0, p5.TWO_PI);
         p5.push();
-        p5.rotateY(slitAngle);
-        p5.translate(0, 20, radius - 3);
-        
-        // Alternating slit colors for Unix aesthetic
-        if (i % 2 === 0) {
-          p5.specularMaterial(...SYSTEM.colorScheme.primary);
-        } else {
-          p5.specularMaterial(...SYSTEM.colorScheme.secondary);
-        }
-        
+        p5.rotateY(a);
+        p5.translate(0, 0, strip.width / p5.TWO_PI - 5);
+        p5.specularMaterial(c);
         p5.noStroke();
-        p5.box(6, height, 3);
+        p5.box(w, strip.height, 5);
         p5.pop();
       }
-      
       p5.pop();
     }
 
-    function renderMatrixRain() {
-      p5.fill(0, 255, 65, 80);
-      p5.textAlign(p5.LEFT);
-      p5.textSize(8);
-      p5.textFont('monospace');
-      
-      const columnWidth = dimensions.width / MATRIX_COLUMNS;
-      
-      for (let i = 0; i < MATRIX_COLUMNS; i++) {
-        const drop = matrixDrops[i];
-        const x = (i * columnWidth) - dimensions.width/2;
-        const y = drop.y - dimensions.height/2;
-        
-        p5.text(drop.char, x, y);
-        
-        drop.y += drop.speed;
-        
-        if (drop.y > dimensions.height) {
-          drop.y = p5.random(-100, 0);
-          drop.char = p5.random(matrixChars.split(''));
-        }
-        
-        if (p5.random() > 0.98) {
-          drop.char = p5.random(matrixChars.split(''));
-        }
-      }
+    function checkKeys() {
+      if (p5.keyIsDown(p5.LEFT_ARROW)) tavel -= 0.005;
+      if (p5.keyIsDown(p5.RIGHT_ARROW)) tavel += 0.005;
+      if (p5.keyIsDown(p5.UP_ARROW)) ztarget += 20;
+      if (p5.keyIsDown(p5.DOWN_ARROW)) ztarget -= 20;
+      if (p5.keyIsDown(32)) avel *= 0.95; // Spacebar brake
     }
 
-    function renderTerminalInterface() {
-      p5.fill(0, 255, 65, 200);
-      p5.textAlign(p5.LEFT);
-      p5.textSize(9);
-      p5.textFont('monospace');
-      
-      // Terminal output
-      let yPos = dimensions.height/2 - 20;
-      for (let i = terminalOutput.length - 1; i >= 0; i--) {
-        if (yPos < -dimensions.height/2 + 100) break;
-        p5.text(terminalOutput[i], -dimensions.width/2 + 10, yPos);
-        yPos -= 12;
-      }
-      
-      // Command prompt
-      p5.fill(255, 255, 255);
-      p5.text(`unix@zoetrope:~$ ${terminalBuffer}█`, -dimensions.width/2 + 10, dimensions.height/2 - 5);
-    }
-
-    function renderInstructions() {
-      p5.fill(255, 255, 255, 180);
-      p5.textAlign(p5.CENTER);
-      p5.textSize(12);
-      p5.textFont('monospace');
-      p5.text("█ UNIX ZOETROPE TERMINAL █", 0, -dimensions.height/3);
-      p5.textSize(10);
-      p5.text("Click to toggle rotation", 0, -dimensions.height/3 + 20);
-      p5.text("Mouse: pan/tilt | Space: brake", 0, -dimensions.height/3 + 35);
-      p5.text("Enter: debug mode", 0, -dimensions.height/3 + 50);
-    }
-
-    function renderDebugOverlay() {
-      p5.fill(255, 255, 0, 180);
-      p5.textAlign(p5.RIGHT);
-      p5.textSize(8);
-      p5.textFont('monospace');
-      
-      const debugInfo = [
-        `FPS: ${p5.nf(p5.frameRate(), 0, 1)}`,
-        `Angular Vel: ${p5.nf(SYSTEM.angularVelocity, 0, 4)}`,
-        `Camera Dist: ${p5.nf(SYSTEM.cameraDistance, 0, 0)}`,
-        `Elevation: ${p5.nf(p5.degrees(SYSTEM.cameraElevation), 0, 1)}°`,
-        `Spinning: ${isSpinning ? 'ON' : 'OFF'}`
-      ];
-      
-      let yPos = -dimensions.height/2 + 20;
-      for (const info of debugInfo) {
-        p5.text(info, dimensions.width/2 - 10, yPos);
-        yPos += 10;
-      }
-    }
-
-    p5.mousePressed = () => {
-      if (p5.mouseX >= -dimensions.width/2 && p5.mouseX <= dimensions.width/2 &&
-          p5.mouseY >= -dimensions.height/2 && p5.mouseY <= dimensions.height/2) {
-        
-        setIsSpinning(!isSpinning);
-        setShowInstructions(false);
-        
-        if (!isSpinning) {
-          SYSTEM.targetAngularVelocity = 0.15;
-          addTerminalOutput('Rotation: ACTIVATED');
-        } else {
-          SYSTEM.targetAngularVelocity = 0;
-          addTerminalOutput('Rotation: DEACTIVATED');
-        }
+    p5.keyPressed = () => {
+      if (p5.keyCode === 13) { // Enter - toggle transparency
+        if (c[3] === 255) c[3] = 120;
+        else c[3] = 255;
+        p5.tint(c);
       }
       return false;
     };
 
-    p5.keyPressed = () => {
-      if (p5.keyCode === 13) { // Enter
-        setDebugMode(!debugMode);
-        addTerminalOutput(`Debug mode: ${!debugMode ? 'ON' : 'OFF'}`);
-      } else if (p5.keyCode === 32) { // Space
-        SYSTEM.angularVelocity *= 0.9;
-        addTerminalOutput('EMERGENCY BRAKE APPLIED');
-      }
+    p5.mousePressed = () => {
+      // Toggle zoom and rotation like your original
+      if (ztarget > -3000) ztarget = -3000;
+      else ztarget = -800;
+      
+      if (tavel < 0.2835) tavel = 0.2835;
+      else tavel = 0;
+      
       return false;
     };
 
     p5.windowResized = () => {
       p5.resizeCanvas(dimensions.width, dimensions.height);
-      createAnimationTexture();
-      
-      // Reinitialize matrix drops for new dimensions
-      for (let i = 0; i < MATRIX_COLUMNS; i++) {
-        matrixDrops[i] = {
-          y: p5.random(-dimensions.height, 0),
-          speed: p5.random(2, 6),
-          char: p5.random(matrixChars.split(''))
-        };
-      }
+      eyeZ = (dimensions.height / 2.0) / p5.tan(p5.PI * 30.0 / 180.0);
+      p5.perspective(p5.PI / 5.0, dimensions.width / dimensions.height, eyeZ / 10.0, eyeZ * 10.0);
     };
-  }, [dimensions, isSpinning, showInstructions, debugMode, terminalBuffer, terminalOutput, addTerminalOutput]);
+  }, [dimensions]);
 
   return (
     <div 
       ref={containerRef}
       className={className}
       style={{ 
-        position: 'relative', 
-        background: 'linear-gradient(135deg, #000000, #001100)', 
-        borderRadius: '10px', 
-        padding: '20px',
+        position: 'relative',
         width: '100%',
         height: '100%',
         minWidth: dimensions.width,
         minHeight: dimensions.height,
-        border: '2px solid #00FF41',
-        boxShadow: '0 0 20px rgba(0, 255, 65, 0.3)'
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'transparent'
       }}
     >
       {onClose && (
@@ -448,43 +220,38 @@ export function ZoetropeSketch({
             position: 'absolute',
             top: '10px',
             right: '10px',
-            background: 'rgba(255, 100, 0, 0.8)',
-            border: '1px solid #FF6400',
-            color: '#000000',
+            background: 'rgba(91, 70, 40, 0.8)',
+            border: '1px solid #5B4628',
+            color: '#FFF',
             padding: '8px 12px',
             borderRadius: '4px',
             cursor: 'pointer',
             zIndex: 10,
-            fontFamily: 'monospace',
-            fontWeight: 'bold'
+            fontSize: '12px'
           }}
         >
-          [X]
+          ×
         </button>
       )}
       
       <div id="zoetrope-container" style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        minHeight: dimensions.height
+        width: dimensions.width,
+        height: dimensions.height,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
       }}>
         <NextReactP5Wrapper sketch={sketch} />
       </div>
       
       <div style={{ 
-        textAlign: 'center', 
-        marginTop: '10px', 
-        color: '#00FF41',
-        fontFamily: 'monospace',
+        marginTop: '10px',
+        textAlign: 'center',
+        color: 'var(--foreground)',
         fontSize: 'clamp(0.7rem, 1.5vw, 0.8rem)',
-        textShadow: '0 0 10px rgba(0, 255, 65, 0.5)'
+        opacity: 0.7
       }}>
-        <p><strong>█ UNIX ZOETROPE TERMINAL v2.3.7-dev █</strong></p>
-        <p>Hardcore terminal-inspired wheel of life | Type commands for interaction</p>
-        <p style={{ color: '#FF6400', fontSize: '0.7em' }}>
-          Built with pure Unix philosophy | Licensed under GNU GPL v3.0
-        </p>
+        <p>Click to zoom & spin | Arrow keys to control | Enter for transparency</p>
       </div>
     </div>
   );
