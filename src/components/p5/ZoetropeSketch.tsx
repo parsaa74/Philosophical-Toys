@@ -70,13 +70,14 @@ export function ZoetropeSketch({
     let tavel = 0;
     let zoom = -3000;
     let ztarget = -3000;
-    let frames = 11;
-    let c = [91, 70, 40, 255] as [number, number, number, number];
+    const frames = 11; // Fixed linter: const instead of let
+    const c = [91, 70, 40, 255] as [number, number, number, number]; // Fixed linter: const instead of let
     let tilt = 0;
     let ttarget = 0;
     let offset = 0;
     let otarget = 0;
     let eyeZ: number;
+    let isSetup = false; // Track if setup is complete
 
     p5.preload = () => {
       strip = p5.loadImage('/images/zoetrope9.jpg');
@@ -90,10 +91,14 @@ export function ZoetropeSketch({
       p5.perspective(p5.PI / 5.0, dimensions.width / dimensions.height, eyeZ / 10.0, eyeZ * 10.0);
       p5.tint(c);
       p5.frameRate(55); // Your preferred frame rate
+      isSetup = true; // Mark setup as complete
     };
 
     p5.draw = () => {
-      if (!strip) return;
+      if (!strip || !isSetup) return;
+      
+      // Apply tint every frame to ensure transparency changes are visible
+      p5.tint(c);
       
       setScene();
       drawCylinder();
@@ -170,15 +175,22 @@ export function ZoetropeSketch({
     }
 
     p5.keyPressed = () => {
+      if (!isSetup) return false; // Don't process keys until setup is complete
+      
       if (p5.keyCode === 13) { // Enter - toggle transparency
-        if (c[3] === 255) c[3] = 120;
-        else c[3] = 255;
-        p5.tint(c);
+        if (c[3] === 255) {
+          c[3] = 120;
+        } else {
+          c[3] = 255;
+        }
+        console.log('Transparency toggled to:', c[3]); // Debug log
       }
       return false;
     };
 
     p5.mousePressed = () => {
+      if (!isSetup) return false; // Don't process mouse until setup is complete
+      
       // Toggle zoom and rotation like your original
       if (ztarget > -3000) ztarget = -3000;
       else ztarget = -800;
@@ -190,9 +202,15 @@ export function ZoetropeSketch({
     };
 
     p5.windowResized = () => {
-      p5.resizeCanvas(dimensions.width, dimensions.height);
-      eyeZ = (dimensions.height / 2.0) / p5.tan(p5.PI * 30.0 / 180.0);
-      p5.perspective(p5.PI / 5.0, dimensions.width / dimensions.height, eyeZ / 10.0, eyeZ * 10.0);
+      if (!isSetup) return; // Safety check for setup completion
+      
+      try {
+        p5.resizeCanvas(dimensions.width, dimensions.height);
+        eyeZ = (dimensions.height / 2.0) / p5.tan(p5.PI * 30.0 / 180.0);
+        p5.perspective(p5.PI / 5.0, dimensions.width / dimensions.height, eyeZ / 10.0, eyeZ * 10.0);
+      } catch (error) {
+        console.warn('Window resize error:', error);
+      }
     };
   }, [dimensions]);
 
