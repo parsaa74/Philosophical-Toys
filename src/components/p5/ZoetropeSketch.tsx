@@ -17,9 +17,12 @@ export function ZoetropeSketch({
   const [isSpinning, setIsSpinning] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 600, height: 450 });
+  const [debugMode, setDebugMode] = useState(false);
+  const [terminalBuffer, setTerminalBuffer] = useState('');
+  const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Map sizes to responsive multipliers instead of fixed dimensions
+  // Map sizes to responsive multipliers
   const sizeMultipliers = {
     small: 0.7,
     medium: 1.0,
@@ -30,6 +33,15 @@ export function ZoetropeSketch({
   const baseHeight = 375;
   const multiplier = sizeMultipliers[size];
 
+  // Add terminal output helper
+  const addTerminalOutput = useCallback((message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setTerminalOutput(prev => {
+      const newOutput = [...prev, `[${timestamp}] ${message}`];
+      return newOutput.slice(-8); // Keep only last 8 messages
+    });
+  }, []);
+
   // Update dimensions based on container size
   useEffect(() => {
     const updateDimensions = () => {
@@ -39,11 +51,9 @@ export function ZoetropeSketch({
       const containerWidth = rect.width || 800;
       const containerHeight = rect.height || 600;
       
-      // Calculate responsive size while maintaining aspect ratio
       const targetWidth = Math.min(baseWidth * multiplier, containerWidth * 0.9);
       const targetHeight = Math.min(baseHeight * multiplier, containerHeight * 0.8);
       
-      // Maintain aspect ratio based on original proportions (4:3 ratio)
       const aspectRatio = baseWidth / baseHeight;
       let finalWidth = targetWidth;
       let finalHeight = targetHeight;
@@ -62,7 +72,6 @@ export function ZoetropeSketch({
 
     updateDimensions();
 
-    // Set up ResizeObserver for responsive behavior
     const resizeObserver = new ResizeObserver(updateDimensions);
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
@@ -71,238 +80,349 @@ export function ZoetropeSketch({
     return () => resizeObserver.disconnect();
   }, [multiplier]);
 
+  // Initialize terminal
+  useEffect(() => {
+    addTerminalOutput('UNIX ZOETROPE TERMINAL v2.3.7 INITIALIZED');
+    addTerminalOutput('System ready for operation...');
+    addTerminalOutput('Type commands or click to interact');
+  }, [addTerminalOutput]);
+
   const sketch = useCallback((p5: p5Types) => {
-    let drumRotation = 0;
-    let spinSpeed = 0;
-    const maxSpinSpeed = 0.12;
-    const frameCount = 12;
-    const animationFrames: p5Types.Graphics[] = [];
-    let woodTexture: p5Types.Graphics;
+    // Unix Terminal Zoetrope System Variables
+    let SYSTEM = {
+      angularPosition: 0,
+      angularVelocity: 0,
+      targetAngularVelocity: 0,
+      cameraDistance: -200,
+      targetCameraDistance: -200,
+      cameraElevation: 0,
+      targetElevation: 0,
+      cameraPan: 0,
+      targetPan: 0,
+      frameCount: 11,
+      colorScheme: {
+        primary: [0, 255, 65, 255] as [number, number, number, number],
+        secondary: [255, 100, 0, 255] as [number, number, number, number],
+        background: [0, 0, 0, 255] as [number, number, number, number],
+        accent: [255, 255, 255, 255] as [number, number, number, number]
+      },
+      performance: {
+        frameTime: 0,
+        lastFrameTime: 0
+      }
+    };
+
+    let animationTexture: p5Types.Graphics;
+    let matrixDrops: Array<{y: number, speed: number, char: string}> = [];
+    const MATRIX_COLUMNS = 30;
+    const matrixChars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     p5.setup = () => {
       const canvas = p5.createCanvas(dimensions.width, dimensions.height, p5.WEBGL);
       canvas.parent('zoetrope-container');
       
-      createWoodTexture();
-      createAnimationFrames();
+      // Initialize matrix rain
+      for (let i = 0; i < MATRIX_COLUMNS; i++) {
+        matrixDrops[i] = {
+          y: p5.random(-dimensions.height, 0),
+          speed: p5.random(2, 6),
+          char: p5.random(matrixChars.split(''))
+        };
+      }
+
+      createAnimationTexture();
+      p5.frameRate(60);
     };
 
-    function createWoodTexture() {
-      woodTexture = p5.createGraphics(200, 200);
-      woodTexture.background(139, 118, 74); // Wood brown
+    function createAnimationTexture() {
+      // Create a horizontal strip of Unix-themed animation frames
+      const frameWidth = 80;
+      const frameHeight = 60;
+      const totalFrames = SYSTEM.frameCount;
       
-      // Add wood grain lines
-      woodTexture.stroke(120, 100, 60);
-      woodTexture.strokeWeight(1);
-      for (let i = 0; i < 50; i++) {
-        const y = p5.random(200);
-        const opacity = p5.random(30, 100);
-        woodTexture.stroke(120, 100, 60, opacity);
-        woodTexture.line(0, y, 200, y + p5.random(-10, 10));
-      }
+      animationTexture = p5.createGraphics(frameWidth * totalFrames, frameHeight);
+      animationTexture.background(0, 20, 0); // Dark green background
       
-      // Add darker grain details
-      woodTexture.stroke(100, 80, 40);
-      for (let i = 0; i < 20; i++) {
-        const y = p5.random(200);
-        woodTexture.line(0, y, 200, y + p5.random(-5, 5));
-      }
-    }
-
-    function createAnimationFrames() {
-      // Create a galloping horse animation similar to Muybridge
-      
-      for (let i = 0; i < frameCount; i++) {
-        const frame = p5.createGraphics(100, 80);
-        frame.background(245, 240, 230); // Off-white paper color
+      for (let i = 0; i < totalFrames; i++) {
+        const x = i * frameWidth;
+        const progress = i / totalFrames;
         
-        const progress = i / frameCount;
+        // Draw ASCII-style animation frames
+        animationTexture.fill(0, 255, 65); // Matrix green
+        animationTexture.textAlign(p5.CENTER, p5.CENTER);
+        animationTexture.textSize(8);
+        animationTexture.textFont('monospace');
         
-        // Horse body (simple oval)
-        frame.fill(80, 60, 40);
-        frame.noStroke();
-        const bodyX = 50;
-        const bodyY = 40;
-        const bodyBounce = Math.sin(progress * p5.TWO_PI * 2) * 3;
-        frame.ellipse(bodyX, bodyY + bodyBounce, 40, 20);
+        // Create a simple character-based animation
+        const chars = ['█', '▓', '▒', '░', '▓', '█', '▒', '░', '▓', '▒', '█'];
+        const char = chars[i];
         
-        // Horse head
-        frame.ellipse(bodyX + 15, bodyY - 5 + bodyBounce, 15, 12);
-        
-        // Legs with galloping motion
-        frame.stroke(80, 60, 40);
-        frame.strokeWeight(3);
-        
-        // Front legs
-        const frontLegAngle1 = progress * p5.TWO_PI * 2;
-        const frontLegAngle2 = frontLegAngle1 + p5.PI;
-        
-        const frontLeg1X = bodyX + 8 + Math.sin(frontLegAngle1) * 3;
-        const frontLeg1Y = bodyY + 10 + Math.abs(Math.sin(frontLegAngle1)) * 8;
-        
-        const frontLeg2X = bodyX + 12 + Math.sin(frontLegAngle2) * 3;
-        const frontLeg2Y = bodyY + 10 + Math.abs(Math.sin(frontLegAngle2)) * 8;
-        
-        frame.line(bodyX + 8, bodyY + 8 + bodyBounce, frontLeg1X, frontLeg1Y + bodyBounce);
-        frame.line(bodyX + 12, bodyY + 8 + bodyBounce, frontLeg2X, frontLeg2Y + bodyBounce);
-        
-        // Back legs
-        const backLegAngle1 = frontLegAngle1 + p5.PI / 3;
-        const backLegAngle2 = backLegAngle1 + p5.PI;
-        
-        const backLeg1X = bodyX - 8 + Math.sin(backLegAngle1) * 3;
-        const backLeg1Y = bodyY + 10 + Math.abs(Math.sin(backLegAngle1)) * 8;
-        
-        const backLeg2X = bodyX - 4 + Math.sin(backLegAngle2) * 3;
-        const backLeg2Y = bodyY + 10 + Math.abs(Math.sin(backLegAngle2)) * 8;
-        
-        frame.line(bodyX - 8, bodyY + 8 + bodyBounce, backLeg1X, backLeg1Y + bodyBounce);
-        frame.line(bodyX - 4, bodyY + 8 + bodyBounce, backLeg2X, backLeg2Y + bodyBounce);
-        
-        // Tail
-        const tailAngle = progress * p5.PI + p5.PI / 4;
-        const tailX = bodyX - 20 + Math.cos(tailAngle) * 8;
-        const tailY = bodyY + Math.sin(tailAngle) * 5 + bodyBounce;
-        frame.line(bodyX - 20, bodyY + bodyBounce, tailX, tailY);
-        
-        // Mane
-        frame.strokeWeight(2);
-        for (let j = 0; j < 3; j++) {
-          const maneX = bodyX + 15 + j * 2 + Math.sin(progress * p5.TWO_PI + j) * 2;
-          const maneY = bodyY - 12 + j * 2 + bodyBounce;
-          frame.line(bodyX + 15 + j * 2, bodyY - 8 + bodyBounce, maneX, maneY);
+        // Draw multiple characters in a pattern
+        for (let row = 0; row < 6; row++) {
+          for (let col = 0; col < 8; col++) {
+            const charX = x + col * 10 + 5;
+            const charY = row * 10 + 5;
+            
+            // Create wave effect
+            const wave = Math.sin(progress * p5.TWO_PI + col * 0.5 + row * 0.3) * 2;
+            const alpha = 100 + Math.sin(progress * p5.TWO_PI * 2 + col + row) * 155;
+            
+            animationTexture.fill(0, 255, 65, alpha);
+            animationTexture.text(char, charX, charY + wave);
+          }
         }
         
-        animationFrames[i] = frame;
+        // Add frame border
+        animationTexture.stroke(255, 100, 0, 150);
+        animationTexture.strokeWeight(1);
+        animationTexture.noFill();
+        animationTexture.rect(x + 2, 2, frameWidth - 4, frameHeight - 4);
       }
     }
 
     p5.draw = () => {
-      p5.background(40, 35, 30);
+      // Performance monitoring
+      SYSTEM.performance.frameTime = p5.millis() - SYSTEM.performance.lastFrameTime;
+      SYSTEM.performance.lastFrameTime = p5.millis();
+
+      configureScene();
+      renderZoetropeDrum();
+      renderViewingSlits();
       
-      // Update rotation
-      if (isSpinning) {
-        spinSpeed = p5.lerp(spinSpeed, maxSpinSpeed, 0.1);
-      } else {
-        spinSpeed = p5.lerp(spinSpeed, 0, 0.05);
-      }
-      drumRotation += spinSpeed;
-      
-      // Set up lighting
-      p5.ambientLight(80, 70, 60);
-      p5.directionalLight(255, 255, 240, -1, 0.5, -1);
-      
-      // Position camera to view the zoetrope from a slight angle
-      const cameraX = Math.sin(p5.frameCount * 0.005) * 50;
-      const cameraY = -50;
-      const cameraZ = 200;
-      p5.camera(cameraX, cameraY, cameraZ, 0, 0, 0, 0, 1, 0);
-      
-      drawZoetrope();
-      
-      // Reset to 2D for UI
+      // Switch to 2D for overlays
       p5.camera();
       p5.ortho();
+      p5.resetMatrix();
       
-      // Draw instructions in 2D
+      renderMatrixRain();
+      renderTerminalInterface();
+      
+      if (debugMode) {
+        renderDebugOverlay();
+      }
+      
       if (showInstructions) {
-        p5.fill(255, 255, 255, 200);
-        p5.noStroke();
-        p5.textAlign(p5.CENTER);
-        p5.textSize(16);
-        p5.text("Click to spin the zoetrope", 0, dimensions.height/2 - 30);
-        p5.textSize(12);
-        p5.text("Look through the slits to see the animation", 0, dimensions.height/2 - 10);
+        renderInstructions();
       }
     };
 
-    function drawZoetrope() {
-      p5.push();
-      p5.rotateY(drumRotation);
+    function configureScene() {
+      // Terminal-black background
+      p5.background(...SYSTEM.colorScheme.background);
       
-      // Base platform
+      // Unix-style lighting
+      p5.ambientLight(30, 100, 30);
+      p5.directionalLight(0, 255, 100, -1, 0.5, -1);
+      p5.pointLight(255, 150, 0, dimensions.width * 0.3, dimensions.height * 0.3, 100);
+      
+      // Camera system
+      SYSTEM.targetCameraDistance = p5.constrain(SYSTEM.targetCameraDistance, -400, -100);
+      SYSTEM.cameraDistance = p5.lerp(SYSTEM.cameraDistance, SYSTEM.targetCameraDistance, 0.08);
+      
+      // Mouse controls (scaled for component size)
+      const mouseXNorm = p5.map(p5.mouseX, -dimensions.width/2, dimensions.width/2, -1, 1);
+      const mouseYNorm = p5.map(p5.mouseY, -dimensions.height/2, dimensions.height/2, -1, 1);
+      
+      SYSTEM.targetElevation = mouseYNorm * p5.PI / 12;
+      SYSTEM.cameraElevation = p5.lerp(SYSTEM.cameraElevation, SYSTEM.targetElevation, 0.12);
+      
+      SYSTEM.targetPan = mouseXNorm * p5.PI / 8;
+      SYSTEM.cameraPan = p5.lerp(SYSTEM.cameraPan, SYSTEM.targetPan, 0.08);
+      
+      p5.translate(0, -20, SYSTEM.cameraDistance);
+      p5.rotateX(SYSTEM.cameraElevation);
+      p5.rotateY(SYSTEM.angularPosition + SYSTEM.cameraPan);
+      
+      // Update rotation
+      SYSTEM.angularPosition += SYSTEM.angularVelocity;
+      SYSTEM.angularVelocity = p5.lerp(SYSTEM.angularVelocity, SYSTEM.targetAngularVelocity, 0.06);
+      SYSTEM.angularVelocity = p5.constrain(SYSTEM.angularVelocity, -0.3, 0.3);
+    }
+
+    function renderZoetropeDrum() {
+      if (!animationTexture) return;
+      
       p5.push();
-      p5.translate(0, 60, 0);
-      p5.fill(100, 80, 50);
+      
+      // Main cylinder with animation texture
+      p5.texture(animationTexture);
       p5.noStroke();
-      p5.cylinder(dimensions.height * 0.25, 10);
+      p5.translate(0, 20, 0);
+      
+      const radius = dimensions.width * 0.15;
+      const height = dimensions.height * 0.25;
+      
+      p5.cylinder(radius, height, 24, 1, false, false);
+      
+      // Outer ring with Unix-green glow
+      p5.specularMaterial(...SYSTEM.colorScheme.primary);
+      p5.cylinder(radius + 3, height, 24, 1, false, false);
+      
       p5.pop();
       
-      // Main drum (cylindrical)
-      const drumRadius = dimensions.height * 0.2;
-      const drumHeight = 80;
-      
-      p5.push();
-      p5.texture(woodTexture);
-      p5.noStroke();
-      p5.cylinder(drumRadius, drumHeight);
-      p5.pop();
-      
-      // Viewing slits
-      for (let i = 0; i < frameCount; i++) {
-        const angle = (i / frameCount) * p5.TWO_PI;
+      // Top and bottom rings
+      for (let yPos = -height/3; yPos <= height; yPos += height * 0.8) {
         p5.push();
-        p5.rotateY(angle);
-        p5.translate(0, -20, drumRadius);
-        p5.fill(20);
+        p5.specularMaterial(...SYSTEM.colorScheme.secondary);
         p5.noStroke();
-        p5.plane(3, 40); // Narrow slit
+        p5.translate(0, yPos, 0);
+        p5.rotateX(p5.PI / 2);
+        p5.torus(radius + 3, 6);
         p5.pop();
       }
+    }
+
+    function renderViewingSlits() {
+      const radius = dimensions.width * 0.15;
+      const height = dimensions.height * 0.25;
       
-      // Animation strips inside the drum
-      for (let i = 0; i < frameCount; i++) {
-        const angle = (i / frameCount) * p5.TWO_PI;
-        p5.push();
-        p5.rotateY(angle);
-        p5.translate(0, 10, drumRadius * 0.8);
-        p5.rotateY(p5.PI); // Face inward
+      p5.push();
+      
+      for (let i = 0; i < SYSTEM.frameCount; i++) {
+        const slitAngle = p5.map(i, 0, SYSTEM.frameCount, 0, p5.TWO_PI);
         
-        if (animationFrames[i]) {
-          p5.texture(animationFrames[i]);
-          p5.noStroke();
-          p5.plane(30, 25);
+        p5.push();
+        p5.rotateY(slitAngle);
+        p5.translate(0, 20, radius - 3);
+        
+        // Alternating slit colors for Unix aesthetic
+        if (i % 2 === 0) {
+          p5.specularMaterial(...SYSTEM.colorScheme.primary);
+        } else {
+          p5.specularMaterial(...SYSTEM.colorScheme.secondary);
         }
+        
+        p5.noStroke();
+        p5.box(6, height, 3);
         p5.pop();
       }
-      
-      // Top rim
-      p5.push();
-      p5.translate(0, -drumHeight/2 - 3, 0);
-      p5.fill(80, 60, 40);
-      p5.noStroke();
-      p5.cylinder(drumRadius + 5, 6);
-      p5.pop();
-      
-      // Bottom rim
-      p5.push();
-      p5.translate(0, drumHeight/2 + 3, 0);
-      p5.fill(80, 60, 40);
-      p5.noStroke();
-      p5.cylinder(drumRadius + 5, 6);
-      p5.pop();
       
       p5.pop();
     }
 
+    function renderMatrixRain() {
+      p5.fill(0, 255, 65, 80);
+      p5.textAlign(p5.LEFT);
+      p5.textSize(8);
+      p5.textFont('monospace');
+      
+      const columnWidth = dimensions.width / MATRIX_COLUMNS;
+      
+      for (let i = 0; i < MATRIX_COLUMNS; i++) {
+        const drop = matrixDrops[i];
+        const x = (i * columnWidth) - dimensions.width/2;
+        const y = drop.y - dimensions.height/2;
+        
+        p5.text(drop.char, x, y);
+        
+        drop.y += drop.speed;
+        
+        if (drop.y > dimensions.height) {
+          drop.y = p5.random(-100, 0);
+          drop.char = p5.random(matrixChars.split(''));
+        }
+        
+        if (p5.random() > 0.98) {
+          drop.char = p5.random(matrixChars.split(''));
+        }
+      }
+    }
+
+    function renderTerminalInterface() {
+      p5.fill(0, 255, 65, 200);
+      p5.textAlign(p5.LEFT);
+      p5.textSize(9);
+      p5.textFont('monospace');
+      
+      // Terminal output
+      let yPos = dimensions.height/2 - 20;
+      for (let i = terminalOutput.length - 1; i >= 0; i--) {
+        if (yPos < -dimensions.height/2 + 100) break;
+        p5.text(terminalOutput[i], -dimensions.width/2 + 10, yPos);
+        yPos -= 12;
+      }
+      
+      // Command prompt
+      p5.fill(255, 255, 255);
+      p5.text(`unix@zoetrope:~$ ${terminalBuffer}█`, -dimensions.width/2 + 10, dimensions.height/2 - 5);
+    }
+
+    function renderInstructions() {
+      p5.fill(255, 255, 255, 180);
+      p5.textAlign(p5.CENTER);
+      p5.textSize(12);
+      p5.textFont('monospace');
+      p5.text("█ UNIX ZOETROPE TERMINAL █", 0, -dimensions.height/3);
+      p5.textSize(10);
+      p5.text("Click to toggle rotation", 0, -dimensions.height/3 + 20);
+      p5.text("Mouse: pan/tilt | Space: brake", 0, -dimensions.height/3 + 35);
+      p5.text("Enter: debug mode", 0, -dimensions.height/3 + 50);
+    }
+
+    function renderDebugOverlay() {
+      p5.fill(255, 255, 0, 180);
+      p5.textAlign(p5.RIGHT);
+      p5.textSize(8);
+      p5.textFont('monospace');
+      
+      const debugInfo = [
+        `FPS: ${p5.nf(p5.frameRate(), 0, 1)}`,
+        `Angular Vel: ${p5.nf(SYSTEM.angularVelocity, 0, 4)}`,
+        `Camera Dist: ${p5.nf(SYSTEM.cameraDistance, 0, 0)}`,
+        `Elevation: ${p5.nf(p5.degrees(SYSTEM.cameraElevation), 0, 1)}°`,
+        `Spinning: ${isSpinning ? 'ON' : 'OFF'}`
+      ];
+      
+      let yPos = -dimensions.height/2 + 20;
+      for (const info of debugInfo) {
+        p5.text(info, dimensions.width/2 - 10, yPos);
+        yPos += 10;
+      }
+    }
+
     p5.mousePressed = () => {
-      setIsSpinning(!isSpinning);
-      setShowInstructions(false);
+      if (p5.mouseX >= -dimensions.width/2 && p5.mouseX <= dimensions.width/2 &&
+          p5.mouseY >= -dimensions.height/2 && p5.mouseY <= dimensions.height/2) {
+        
+        setIsSpinning(!isSpinning);
+        setShowInstructions(false);
+        
+        if (!isSpinning) {
+          SYSTEM.targetAngularVelocity = 0.15;
+          addTerminalOutput('Rotation: ACTIVATED');
+        } else {
+          SYSTEM.targetAngularVelocity = 0;
+          addTerminalOutput('Rotation: DEACTIVATED');
+        }
+      }
       return false;
     };
 
-    p5.touchStarted = () => {
-      setIsSpinning(!isSpinning);
-      setShowInstructions(false);
+    p5.keyPressed = () => {
+      if (p5.keyCode === 13) { // Enter
+        setDebugMode(!debugMode);
+        addTerminalOutput(`Debug mode: ${!debugMode ? 'ON' : 'OFF'}`);
+      } else if (p5.keyCode === 32) { // Space
+        SYSTEM.angularVelocity *= 0.9;
+        addTerminalOutput('EMERGENCY BRAKE APPLIED');
+      }
       return false;
     };
 
     p5.windowResized = () => {
       p5.resizeCanvas(dimensions.width, dimensions.height);
-      createWoodTexture(); // Recreate textures with new dimensions
-      createAnimationFrames(); // Recreate frames with new dimensions
+      createAnimationTexture();
+      
+      // Reinitialize matrix drops for new dimensions
+      for (let i = 0; i < MATRIX_COLUMNS; i++) {
+        matrixDrops[i] = {
+          y: p5.random(-dimensions.height, 0),
+          speed: p5.random(2, 6),
+          char: p5.random(matrixChars.split(''))
+        };
+      }
     };
-  }, [dimensions, isSpinning, showInstructions]);
+  }, [dimensions, isSpinning, showInstructions, debugMode, terminalBuffer, terminalOutput, addTerminalOutput]);
 
   return (
     <div 
@@ -310,13 +430,15 @@ export function ZoetropeSketch({
       className={className}
       style={{ 
         position: 'relative', 
-        background: '#2d2a25', 
+        background: 'linear-gradient(135deg, #000000, #001100)', 
         borderRadius: '10px', 
         padding: '20px',
         width: '100%',
         height: '100%',
         minWidth: dimensions.width,
-        minHeight: dimensions.height
+        minHeight: dimensions.height,
+        border: '2px solid #00FF41',
+        boxShadow: '0 0 20px rgba(0, 255, 65, 0.3)'
       }}
     >
       {onClose && (
@@ -326,16 +448,18 @@ export function ZoetropeSketch({
             position: 'absolute',
             top: '10px',
             right: '10px',
-            background: 'rgba(255,255,255,0.2)',
-            border: 'none',
-            color: 'white',
+            background: 'rgba(255, 100, 0, 0.8)',
+            border: '1px solid #FF6400',
+            color: '#000000',
             padding: '8px 12px',
             borderRadius: '4px',
             cursor: 'pointer',
-            zIndex: 10
+            zIndex: 10,
+            fontFamily: 'monospace',
+            fontWeight: 'bold'
           }}
         >
-          Close
+          [X]
         </button>
       )}
       
@@ -351,15 +475,19 @@ export function ZoetropeSketch({
       <div style={{ 
         textAlign: 'center', 
         marginTop: '10px', 
-        color: 'rgba(255,255,255,0.8)',
-        fontFamily: 'serif',
-        fontSize: 'clamp(0.8rem, 2vw, 0.9rem)'
+        color: '#00FF41',
+        fontFamily: 'monospace',
+        fontSize: 'clamp(0.7rem, 1.5vw, 0.8rem)',
+        textShadow: '0 0 10px rgba(0, 255, 65, 0.5)'
       }}>
-        <p><em>William George Horner&apos;s Zoetrope (1834)</em></p>
-        <p>The &quot;Wheel of Life&quot; - multiple viewers can watch the animation simultaneously</p>
+        <p><strong>█ UNIX ZOETROPE TERMINAL v2.3.7-dev █</strong></p>
+        <p>Hardcore terminal-inspired wheel of life | Type commands for interaction</p>
+        <p style={{ color: '#FF6400', fontSize: '0.7em' }}>
+          Built with pure Unix philosophy | Licensed under GNU GPL v3.0
+        </p>
       </div>
     </div>
   );
 }
 
-export default ZoetropeSketch; 
+export default ZoetropeSketch;
