@@ -236,6 +236,7 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
     if (!isVisible) return;
 
     const handleWheel = (e: WheelEvent) => {
+      if (isModalActive) return; // Lock navigation when modal is open
       e.preventDefault();
       const direction = e.deltaY > 0 ? 1 : -1;
       const velocity = Math.abs(e.deltaY / 150); // Much less sensitive velocity calculation
@@ -243,6 +244,7 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isModalActive && e.key !== 'Escape') return; // Only allow Escape when modal is open
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
         e.preventDefault();
         handleScroll(1, 1);
@@ -259,11 +261,13 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
     let touchStartTime = 0;
 
     const handleTouchStart = (e: TouchEvent) => {
+      if (isModalActive) return; // Lock touch navigation when modal is open
       touchStartY = e.touches[0].clientY;
       touchStartTime = Date.now();
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (isModalActive) return; // Lock touch navigation when modal is open
       const touchEndY = e.changedTouches[0].clientY;
       const touchEndTime = Date.now();
       const deltaY = touchStartY - touchEndY;
@@ -607,9 +611,9 @@ export function PhilosophicalTimeline({ isVisible = false, onInteraction }: Phil
                   opacity,
                   pointerEvents: opacity > 0.3 ? 'auto' : 'none'
                 }}
-                onClick={() => jumpToIndex(index)}
+                onClick={() => !isModalActive && jumpToIndex(index)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (!isModalActive && (e.key === 'Enter' || e.key === ' ')) {
                     e.preventDefault();
                     jumpToIndex(index);
                   }

@@ -111,3 +111,9 @@ body {
   grid-template-columns: 2fr 1fr;
   gap: var(--spacing-lg);
 }
+
+/* 3D perspective utilities for flipbook */
+.perspective-1000 {
+  perspective: 1000px;
+  perspective-origin: center center;
+}
